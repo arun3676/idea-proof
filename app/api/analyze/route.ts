@@ -310,13 +310,8 @@ export async function POST(request: Request) {
       }
     };
 
-    // Simulate realistic AGI processing time (35-40 seconds)
-    const processingTime = 35000 + Math.random() * 5000; // 35-40 seconds
-    console.log(`⏳ AGI Processing: Simulating ${Math.round(processingTime/1000)}s analysis...`);
-    
-    // Add realistic delay to simulate neural network processing
-    await new Promise(resolve => setTimeout(resolve, processingTime));
-    
+    // Note: Delay moved to frontend to avoid Vercel serverless timeout (10s limit)
+    // The frontend will simulate the 35-40 second processing time
     console.log(`✅ AGI Processing: Complete for "${idea}"`);
 
     return NextResponse.json(mockResponse);

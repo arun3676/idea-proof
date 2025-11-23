@@ -61,13 +61,24 @@ export default function Home() {
       console.log('=== FRONTEND API CALL ===');
       console.log('Sending idea:', idea);
       
-      const response = await fetch('http://localhost:3001/api/analyze', {
+      // Start the API call
+      const apiCallPromise = fetch('/api/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ idea }),
       });
+
+      // Simulate realistic AGI processing time (35-40 seconds)
+      // This delay is on the frontend to avoid Vercel's 10-second serverless timeout
+      const processingTime = 35000 + Math.random() * 5000; // 35-40 seconds
+      console.log(`⏳ Simulating ${Math.round(processingTime/1000)}s AGI processing time...`);
+      
+      const delayPromise = new Promise(resolve => setTimeout(resolve, processingTime));
+
+      // Wait for both the API call AND the delay to complete
+      const [response] = await Promise.all([apiCallPromise, delayPromise]);
 
       console.log('Response status:', response.status);
       console.log('Response ok:', response.ok);
