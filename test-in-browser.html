@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - In Browser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .status {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 API Testing Dashboard</h1>
+        <p>This page allows you to test your API endpoints directly in the browser.</p>
+        
+        <div class="test-section">
+            <h3>🔧 Configuration</h3>
+            <label for="baseUrl">Base URL:</label>
+            <input type="text" id="baseUrl" value="http://localhost:3000" placeholder="API Base URL">
+            
+            <button class="test-button" onclick="testConnection()">Test Connection</button>
+            <div id="connectionResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📝 Analysis API Test</h3>
+            <label for="analysisInput">Input for Analysis:</label>
+            <textarea id="analysisInput" rows="3" placeholder="Enter text to analyze...">This is a test input for the analysis API.</textarea>
+            
+            <button class="test-button" onclick="testAnalysisAPI()">Test Analysis</button>
+            <button class="test-button" onclick="testStreamingAPI()">Test Streaming</button>
+            <div id="analysisResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔍 Search API Test</h3>
+            <label for="searchQuery">Search Query:</label>
+            <input type="text" id="searchQuery" value="how to use this application" placeholder="Enter search query...">
+            
+            <button class="test-button" onclick="testSearchAPI()">Test Search</button>
+            <div id="searchResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🗂️ Cache Test</h3>
+            <button class="test-button" onclick="testCacheWrite()">Test Cache Write</button>
+            <button class="test-button" onclick="testCacheRead()">Test Cache Read</button>
+            <div id="cacheResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🚀 Full Integration Test</h3>
+            <button class="test-button" onclick="runFullTest()">Run All Tests</button>
+            <div id="fullTestResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Test Summary</h3>
+            <div id="testSummary">
+                <div class="status">Ready to run tests...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = document.getElementById('baseUrl').value;
+        let testResults = {
+            connection: false,
+            analysis: false,
+            streaming: false,
+            search: false,
+            cache: false
+        };
+
+        function updateResult(elementId, message, type = 'loading') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        function updateSummary() {
+            const passed = Object.values(testResults).filter(r => r === true).length;
+            const total = Object.keys(testResults).length;
+            const summary = document.getElementById('testSummary');
+            
+            if (passed === total) {
+                summary.innerHTML = '<div class="status success">✅ All tests passed! Application is ready.</div>';
+            } else if (passed > 0) {
+                summary.innerHTML = `<div class="status">⚠️ ${passed}/${total} tests passed. Some issues need attention.</div>`;
+            } else {
+                summary.innerHTML = '<div class="status error">❌ No tests passed yet. Check configuration.</div>';
+            }
+        }
+
+        async function testConnection() {
+            updateResult('connectionResult', 'Testing connection...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/analyze`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    updateResult('connectionResult', '✅ Connection successful! Server is responding.', 'success');
+                    testResults.connection = true;
+                } else {
+                    updateResult('connectionResult', `❌ Connection failed: HTTP ${response.status}`, 'error');
+                    testResults.connection = false;
+                }
+            } catch (error) {
+                updateResult('connectionResult', `❌ Connection failed: ${error.message}`, 'error');
+                testResults.connection = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testAnalysisAPI() {
+            const input = document.getElementById('analysisInput').value;
+            updateResult('analysisResult', 'Testing analysis API...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ input: input })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateResult('analysisResult', `✅ Analysis successful!\n\nResponse:\n${JSON.stringify(data, null, 2)}`, 'success');
+                    testResults.analysis = true;
+                } else {
+                    const error = await response.text();
+                    updateResult('analysisResult', `❌ Analysis failed: ${error}`, 'error');
+                    testResults.analysis = false;
+                }
+            } catch (error) {
+                updateResult('analysisResult', `❌ Analysis failed: ${error.message}`, 'error');
+                testResults.analysis = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testStreamingAPI() {
+            const input = document.getElementById('analysisInput').value;
+            updateResult('analysisResult', 'Testing streaming API...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/analyze-stream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ input: input })
+                });
+                
+                if (response.ok) {
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let result = '';
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        result += decoder.decode(value);
+                    }
+                    
+                    updateResult('analysisResult', `✅ Streaming successful!\n\nResponse:\n${result}`, 'success');
+                    testResults.streaming = true;
+                } else {
+                    const error = await response.text();
+                    updateResult('analysisResult', `❌ Streaming failed: ${error}`, 'error');
+                    testResults.streaming = false;
+                }
+            } catch (error) {
+                updateResult('analysisResult', `❌ Streaming failed: ${error.message}`, 'error');
+                testResults.streaming = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testSearchAPI() {
+            const query = document.getElementById('searchQuery').value;
+            updateResult('searchResult', 'Testing search API...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateResult('searchResult', `✅ Search successful!\n\nResponse:\n${JSON.stringify(data, null, 2)}`, 'success');
+                    testResults.search = true;
+                } else {
+                    const error = await response.text();
+                    updateResult('searchResult', `❌ Search failed: ${error}`, 'error');
+                    testResults.search = false;
+                }
+            } catch (error) {
+                updateResult('searchResult', `❌ Search failed: ${error.message}`, 'error');
+                testResults.search = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testCacheWrite() {
+            updateResult('cacheResult', 'Testing cache write...', 'loading');
+            
+            try {
+                const testData = {
+                    key: 'browser-test-' + Date.now(),
+                    value: { message: 'Test data from browser', timestamp: Date.now() }
+                };
+                
+                const response = await fetch(`${baseUrl}/api/cache`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (response.ok) {
+                    updateResult('cacheResult', `✅ Cache write successful!\n\nData: ${JSON.stringify(testData)}`, 'success');
+                    testResults.cache = true;
+                } else {
+                    const error = await response.text();
+                    updateResult('cacheResult', `❌ Cache write failed: ${error}`, 'error');
+                    testResults.cache = false;
+                }
+            } catch (error) {
+                updateResult('cacheResult', `❌ Cache write failed: ${error.message}`, 'error');
+                testResults.cache = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testCacheRead() {
+            updateResult('cacheResult', 'Testing cache read...', 'loading');
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/cache/browser-test-`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateResult('cacheResult', `✅ Cache read successful!\n\nData: ${JSON.stringify(data, null, 2)}`, 'success');
+                    testResults.cache = true;
+                } else {
+                    const error = await response.text();
+                    updateResult('cacheResult', `❌ Cache read failed: ${error}`, 'error');
+                    testResults.cache = false;
+                }
+            } catch (error) {
+                updateResult('cacheResult', `❌ Cache read failed: ${error.message}`, 'error');
+                testResults.cache = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function runFullTest() {
+            updateResult('fullTestResult', 'Running full test suite...', 'loading');
+            
+            const tests = [
+                { name: 'Connection', fn: testConnection },
+                { name: 'Analysis', fn: testAnalysisAPI },
+                { name: 'Search', fn: testSearchAPI },
+                { name: 'Cache', fn: testCacheWrite }
+            ];
+            
+            for (const test of tests) {
+                updateResult('fullTestResult', `Running ${test.name} test...`, 'loading');
+                await test.fn();
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay between tests
+            }
+            
+            const passed = Object.values(testResults).filter(r => r === true).length;
+            const total = Object.keys(testResults).length;
+            
+            updateResult('fullTestResult', `🏁 Full test suite completed!\n\nResults: ${passed}/${total} tests passed\n\nStatus: ${passed === total ? '✅ READY FOR DEPLOYMENT' : '⚠️ NEEDS ATTENTION'}`, 
+                        passed === total ? 'success' : 'error');
+        }
+
+        // Initialize
+        updateSummary();
+    </script>
+</body>
+</html>
